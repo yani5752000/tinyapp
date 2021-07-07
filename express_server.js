@@ -5,6 +5,27 @@ function generateRandomString() {
     return result;
 }
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
+function lookUp(users, email) {
+  for (let user in users) {
+    if (users[user]["email"] === email) {
+      return true;
+    }
+  }
+  return false;
+}
+
 const express = require("express");
 var cookieParser = require('cookie-parser')
 const app = express();
@@ -32,20 +53,29 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"], };
-  
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { urls: urlDatabase, user: user };
   
   res.render("urls_index", templateVars);
 });
 
+app.get("/register", (req, res) => {
+  //const templateVars = { urls: urlDatabase, username: req.cookies["username"], };
+  
+  
+  res.render("urls_register");
+});
+
 app.get("/urls/new", (req, res) => {
-  const templateVars = {username: req.cookies["username"] };
+  const user = users[req.cookies["user_id"]];
+  const templateVars = {user: user };
   
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const user = users[req.cookies["user_id"]];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user };
   
   res.render("urls_show", templateVars);
 });
@@ -91,7 +121,26 @@ app.post("/logout", (req, res) => {
 });
 
 
+app.post("/register", (req, res) => {
+  //urlDatabase[req.params.id] = req.body.longURL;
+  //res.redirect("/urls/");
+  
+  if (req.body.email === "" || req.body.password === "") {
+    res.send("404- Bad Request");
+  } else if (lookUp(users, req.body.email)) {
+    res.send("404- Bad Request");
+  } else {
+    const id = generateRandomString();
+    res.cookie("user_id", id);
 
+    const user = { id: id, email: req.body.email, password: req.body.password};
+  
+    users[id] = user;
+    
+    res.redirect("/urls/");
+  }
+  console.log(users);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
