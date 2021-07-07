@@ -17,13 +17,19 @@ const users = {
     password: "dishwasher-funk"
   }
 };
+/*function checkPassword(email, password) {
+  for (let user in users) {
+    if (users[user]["email"] === email) {
+      return users[user]["password"] === password;
+    }
+  }
+}*/
 function lookUp(users, email) {
   for (let user in users) {
     if (users[user]["email"] === email) {
-      return true;
+      return user;
     }
   }
-  return false;
 }
 
 const express = require("express");
@@ -60,13 +66,20 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  //const templateVars = { urls: urlDatabase, username: req.cookies["username"], };
-  
-  
   res.render("urls_register");
 });
 
 app.get("/urls/new", (req, res) => {
+  /*
+  if (req.cookies["user_id"]) {
+    const user = users[req.cookies["user_id"]];
+  const templateVars = {user: user };
+  
+  res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }*/
+
   const user = users[req.cookies["user_id"]];
   const templateVars = {user: user };
   
@@ -109,17 +122,19 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  
-  //console.log(req.body);
-  res.redirect("/urls");
-  
+  if (!lookUp(users, req.body.email)) {
+    res.send("403 Forbidden- no such email in our recgistery");
+  } else if (req.body.password !== users[lookUp(users, req.body.email)]["password"]) {
+    res.send("403 Forbidden- wrong password");
+  } else {
+    res.cookie("user_id", users[lookUp(users, req.body.email)]["id"]);
+    res.redirect("/urls");
+  }
 });
 
 app.post("/logout", (req, res) => {
   
-  
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   
   res.redirect("/urls");
   
