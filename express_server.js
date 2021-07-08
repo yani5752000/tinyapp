@@ -42,8 +42,8 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  //"b2xVn2": "http://www.lighthouselabs.ca",
+  //"9sm5xK": "http://www.google.com"
 };
 
 app.get("/", (req, res) => {
@@ -66,45 +66,50 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("urls_register");
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    res.render("urls_register");
+  }
 });
 
 app.get("/urls/new", (req, res) => {
-  /*
+  
   if (req.cookies["user_id"]) {
     const user = users[req.cookies["user_id"]];
-  const templateVars = {user: user };
-  
-  res.render("urls_new", templateVars);
+    const templateVars = {user: user };
+    
+    res.render("urls_new", templateVars);
   } else {
+    
     res.redirect("/login");
-  }*/
-
-  const user = users[req.cookies["user_id"]];
-  const templateVars = {user: user };
-  
-  res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.cookies["user_id"]];
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]["longURL"], user: user };
   
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  
   res.redirect(longURL);
 });
 
 app.get("/login", (req, res) => {
-  //const longURL = urlDatabase[req.params.shortURL];
-  res.render("urls_login");
+  if (req.cookies["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    res.render("urls_login");
+  }
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  const obj = {longURL: req.body.longURL, userID: req.cookies["user_id"]};
+    urlDatabase[req.params.id] = obj;
   res.redirect("/urls/");
 });
 
@@ -113,11 +118,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls/");
 });
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect("/urls/:" + shortURL);
-  console.log(urlDatabase);
+  if (req.cookies["user_id"]) {
+    console.log(req.body);  // Log the POST request body to the console
+    const shortURL = generateRandomString();
+    const obj = {longURL: req.body.longURL, userID: req.cookies["user_id"]};
+    urlDatabase[shortURL] = obj;
+    res.redirect("/urls/" + shortURL);
+    console.log(urlDatabase);
+  } else {
+    console.log("ERROR: you cannot post")
+    res.redirect("/urls");
+  }
   //res.send("Ok");         // Respond with 'Ok' (we will replace this)
 });
 
