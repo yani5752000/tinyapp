@@ -42,8 +42,8 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  //"b2xVn2": "http://www.lighthouselabs.ca",
-  //"9sm5xK": "http://www.google.com"
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "ewr65f"},
+  "9sm5xK": {longURL:"http://www.google.com", userID: "jh8gf5"}
 };
 
 app.get("/", (req, res) => {
@@ -94,7 +94,7 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
+  const longURL = urlDatabase[req.params.shortURL]["longURL"];
   
   res.redirect(longURL);
 });
@@ -117,14 +117,16 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls/");
 });
+
+
 app.post("/urls", (req, res) => {
   if (req.cookies["user_id"]) {
-    console.log(req.body);  // Log the POST request body to the console
+      // Log the POST request body to the console
     const shortURL = generateRandomString();
     const obj = {longURL: req.body.longURL, userID: req.cookies["user_id"]};
     urlDatabase[shortURL] = obj;
     res.redirect("/urls/" + shortURL);
-    console.log(urlDatabase);
+    
   } else {
     console.log("ERROR: you cannot post")
     res.redirect("/urls");
@@ -153,9 +155,6 @@ app.post("/logout", (req, res) => {
 
 
 app.post("/register", (req, res) => {
-  //urlDatabase[req.params.id] = req.body.longURL;
-  //res.redirect("/urls/");
-  
   if (req.body.email === "" || req.body.password === "") {
     res.send("404- Bad Request");
   } else if (lookUp(users, req.body.email)) {
