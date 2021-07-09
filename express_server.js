@@ -1,3 +1,5 @@
+const {getUserByEmail} = require("./helpers.js");
+
 function generateRandomString() {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
@@ -6,32 +8,8 @@ function generateRandomString() {
 }
 
 const users = { 
-  /*
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }*/
+  
 };
-/*function checkPassword(email, password) {
-  for (let user in users) {
-    if (users[user]["email"] === email) {
-      return users[user]["password"] === password;
-    }
-  }
-}*/
-function lookUp(users, email) {
-  for (let user in users) {
-    if (users[user]["email"] === email) {
-      return user;
-    }
-  }
-}
 
 function urlsForUser(id) {
   const obj = {};
@@ -47,9 +25,8 @@ function urlsForUser(id) {
 const cookieSession = require('cookie-session')
 const express = require("express");
 const bcrypt = require('bcrypt');
-var cookieParser = require('cookie-parser')
+
 const app = express();
-app.use(cookieParser())
 
 app.use(cookieSession({
   name: 'session',
@@ -192,12 +169,12 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (!lookUp(users, req.body.email)) {
+  if (!getUserByEmail(req.body.email, users)) {
     res.send("403 Forbidden- no such email in our recgistery");
-  } else if (!bcrypt.compareSync(req.body.password, users[lookUp(users, req.body.email)]["password"])) {
+  } else if (!bcrypt.compareSync(req.body.password, users[getUserByEmail(req.body.email, users)]["password"])) {
     res.send("403 Forbidden- wrong password");
   } else {
-    req.session.user_id = users[lookUp(users, req.body.email)]["id"];
+    req.session.user_id = users[getUserByEmail(req.body.email, users)]["id"];
     res.redirect("/urls");
   }
 });
@@ -215,7 +192,7 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.send("404- Bad Request");
-  } else if (lookUp(users, req.body.email)) {
+  } else if (getUserByEmail(req.body.email, users)) {
     res.send("404- Bad Request");
   } else {
     const id = generateRandomString();
