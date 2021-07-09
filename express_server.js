@@ -6,6 +6,7 @@ function generateRandomString() {
 }
 
 const users = { 
+  /*
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
@@ -15,7 +16,7 @@ const users = {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
-  }
+  }*/
 };
 /*function checkPassword(email, password) {
   for (let user in users) {
@@ -44,6 +45,7 @@ function urlsForUser(id) {
 }
 
 const express = require("express");
+const bcrypt = require('bcrypt');
 var cookieParser = require('cookie-parser')
 const app = express();
 app.use(cookieParser())
@@ -183,7 +185,7 @@ app.post("/urls", (req, res) => {
 app.post("/login", (req, res) => {
   if (!lookUp(users, req.body.email)) {
     res.send("403 Forbidden- no such email in our recgistery");
-  } else if (req.body.password !== users[lookUp(users, req.body.email)]["password"]) {
+  } else if (!bcrypt.compareSync(req.body.password, users[lookUp(users, req.body.email)]["password"])) {
     res.send("403 Forbidden- wrong password");
   } else {
     res.cookie("user_id", users[lookUp(users, req.body.email)]["id"]);
@@ -209,8 +211,10 @@ app.post("/register", (req, res) => {
     const id = generateRandomString();
     res.cookie("user_id", id);
 
-    const user = { id: id, email: req.body.email, password: req.body.password};
-  
+    const password = req.body.password; 
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    const user = { id: id, email: req.body.email, password: hashedPassword }
     users[id] = user;
     
     res.redirect("/urls/");
