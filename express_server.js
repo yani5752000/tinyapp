@@ -91,7 +91,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log("get after edit");
   if (!req.session.user_id){
     res.render("urls_notlogged");
   } else if (!Object.keys(urlDatabase).includes(req.params.shortURL)) {
@@ -170,9 +169,9 @@ app.post("/urls", (req, res) => {
 
 app.post("/login", (req, res) => {
   if (!getUserByEmail(req.body.email, users)) {
-    res.send("403 Forbidden- no such email in our recgistery");
+    res.render("urls_403");
   } else if (!bcrypt.compareSync(req.body.password, users[getUserByEmail(req.body.email, users)]["password"])) {
-    res.send("403 Forbidden- wrong password");
+    res.render("urls_403.ejs");
   } else {
     req.session.user_id = users[getUserByEmail(req.body.email, users)]["id"];
     res.redirect("/urls");
@@ -180,20 +179,17 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  
-  //res.clearCookie("user_id");
   req.session = null
   
   res.redirect("/urls");
-  
 });
 
 
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
-    res.send("404- Bad Request");
+    res.render("urls_404");
   } else if (getUserByEmail(req.body.email, users)) {
-    res.send("404- Bad Request");
+    res.render("urls_404");
   } else {
     const id = generateRandomString();
     req.session.user_id = id;
@@ -206,7 +202,6 @@ app.post("/register", (req, res) => {
     
     res.redirect("/urls/");
   }
-  console.log(users);
 });
 
 app.listen(PORT, () => {
