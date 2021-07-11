@@ -1,26 +1,8 @@
-const {getUserByEmail} = require("./helpers.js");
+const {getUserByEmail, generateRandomString, urlsForUser, urlDatabase, users} = require("./helpers.js");
 
-function generateRandomString() {
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-    for (let i = 6; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-    return result;
-}
 
-const users = { 
-  
-};
 
-function urlsForUser(id) {
-  const obj = {};
-  for (const sURL in urlDatabase) {
-    if (urlDatabase[sURL]["userID"] === id) {
-      obj[sURL] = urlDatabase[sURL]["longURL"];
-    }
-  }
 
-  return obj;
-}
 
 const cookieSession = require('cookie-session')
 const express = require("express");
@@ -41,23 +23,25 @@ app.use(bodyParser.urlencoded({extended: true}));
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
-const urlDatabase = {
-  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "ewr65f"},
-  "9sm5xK": {longURL:"http://www.google.com", userID: "jh8gf5"}
-};
 
+//say Hello! on root page
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+//this parses the urlDatabase
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//this page sayas Hello
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+
+//this page either shows the user his/her urls if logged in  
+//or redirects to login page if not logged in
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
     const user = users[req.session.user_id];
@@ -65,10 +49,12 @@ app.get("/urls", (req, res) => {
     const templateVars = { urls: urls, user: user };
     res.render("urls_index", templateVars);
   } else {
-    res.render("urls_notlogged");
+    res.redirect("/login");
   }
 });
 
+//this page either presents the registeration form if notregistered
+//or gives error message if registered
 app.get("/register", (req, res) => {
   if (req.session.user_id) {
     res.redirect("/urls");
@@ -76,6 +62,7 @@ app.get("/register", (req, res) => {
     res.render("urls_register");
   }
 });
+
 
 app.get("/urls/new", (req, res) => {
   
@@ -90,6 +77,10 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+
+
+//this page presents the newly created short url together 
+//with its correspondinglong url if loggedin else gives an appropriate message
 app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id){
     res.render("urls_notlogged");
@@ -106,6 +97,10 @@ app.get("/urls/:shortURL", (req, res) => {
   
 });
 
+
+// this page takes the short url in the url and redirects to the page for 
+//corresponding long url  
+//else, it gives appropriate message 
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL]) {
     const longURL = urlDatabase[req.params.shortURL]["longURL"];
@@ -115,6 +110,8 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+//this page presents the login form if not logged in
+//else redirects to the urls page
 app.get("/login", (req, res) => {
   if (req.session.user_id) {
     res.redirect("/urls");
@@ -123,6 +120,8 @@ app.get("/login", (req, res) => {
   }
 });
 
+//this makes it possible to update the long url corresponding to
+//a short url if logged in, else, gives an appropriate message
 app.post("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
     res.render("urls_notlogged");
@@ -138,7 +137,8 @@ app.post("/urls/:id", (req, res) => {
 
   
 });
-
+ //this makes it possible to delete a short url if logged in
+ // else it gives an appropriate message
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (!req.session.user_id) {
     res.render("urls_notlogged");
@@ -152,7 +152,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-
+// this makes it possible to generate a short url if logged in
 app.post("/urls", (req, res) => {
   if (req.session.user_id) {
       // Log the POST request body to the console
@@ -167,6 +167,7 @@ app.post("/urls", (req, res) => {
   }
 });
 
+// this makes it possible to login or else gives appropriate message
 app.post("/login", (req, res) => {
   if (!getUserByEmail(req.body.email, users)) {
     res.render("urls_403");
@@ -178,13 +179,15 @@ app.post("/login", (req, res) => {
   }
 });
 
+//this makes it possible to log out and destroys the session and redirects to urls
 app.post("/logout", (req, res) => {
   req.session = null
   
   res.redirect("/urls");
 });
 
-
+//this makes it possible to register if not already registered
+//or else gives an appropriate message
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.render("urls_404");
@@ -204,6 +207,7 @@ app.post("/register", (req, res) => {
   }
 });
 
+//this keeps listening on port 8080
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
