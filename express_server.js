@@ -24,9 +24,11 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 
 
-//say Hello! on root page
+//redirects to urls if logged in 
+//else redirects to login page
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  //res.send("Hello!");
+  res.redirect("/urls");
 });
 
 //this parses the urlDatabase
@@ -63,7 +65,8 @@ app.get("/register", (req, res) => {
   }
 });
 
-
+//allows to create anew short url if loged in
+//else redirects to login page
 app.get("/urls/new", (req, res) => {
   
   if (req.session.user_id) {
@@ -85,14 +88,16 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id){
     res.render("urls_notlogged");
   } else if (!Object.keys(urlDatabase).includes(req.params.shortURL)) {
-    res.render("urls_notvalid");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notvalid", templateVars);
   } else if (Object.keys(urlsForUser(req.session.user_id)).includes(req.params.shortURL)) {
     const user = users[req.session.user_id];
     const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]["longURL"], user: user };
   
     res.render("urls_show", templateVars);
   } else {
-    res.render("urls_notyours");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notyours", templateVars);
   }
   
 });
@@ -106,7 +111,8 @@ app.get("/u/:shortURL", (req, res) => {
     const longURL = urlDatabase[req.params.shortURL]["longURL"];
     res.redirect(longURL);
   } else {
-    res.render("urls_notvalid");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notvalid", templateVars);
   }
 });
 
@@ -126,13 +132,15 @@ app.post("/urls/:id", (req, res) => {
   if (!req.session.user_id) {
     res.render("urls_notlogged");
   } else if (!((Object.keys(urlDatabase)).includes(req.params.id))) {
-    res.render("urls_notvalid");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notvalid", templateVars);
   } else if (Object.keys(urlsForUser(req.session.user_id)).includes(req.params.id)) {
     const obj = {longURL: req.body.longURL, userID: req.session.user_id};
     urlDatabase[req.params.id] = obj;
     res.redirect("/urls/");
   } else {
-    res.render("urls_notyours");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notyours", templateVars);
   }
 
   
@@ -143,12 +151,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   if (!req.session.user_id) {
     res.render("urls_notlogged");
   } else if (!Object.keys(urlDatabase).includes(req.params.shortURL)) {
-    res.render("urls_notvalid");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notvalid", templateVars);
   } else if (Object.keys(urlsForUser(req.session.user_id)).includes(req.params.shortURL)) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls/");
   } else {
-    res.render("urls_notyours");
+    const templateVars = {user: users[req.session.user_id]};
+    res.render("urls_notyours", templateVars);
   }
 });
 
